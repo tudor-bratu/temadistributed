@@ -1,0 +1,68 @@
+@baseUrl = http://localhost:3001/api/blobs
+@newBlobUuid = "550e8400-e29b-41d4-a716-446655440000"
+@secondBlobUuid = "123e4567-e89b-12d3-a456-426614174000"
+
+### Create a new image blob with JSON data
+# @name createBlobJson
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "uuid": "550e8400-e29b-41d4-a716-446655440000",
+  "file_name": "test_image.jpg",
+  "content_type": "image/jpeg",
+  "image_data": "base64_encoded_data_here"
+}
+
+### Create a new image blob with binary data
+# @name createBlobBinary
+POST {{baseUrl}}
+Content-Type: application/octet-stream
+X-File-Name: test_image.jpg
+UUID: {{secondBlobUuid}}
+
+< ./path/to/your/image.jpg
+
+### Get metadata for all image blobs
+GET {{baseUrl}}
+
+### Get a specific image blob by UUID (returns the actual image)
+# Note: Manually set the UUID here after creating a blob,
+# or use the 'createBlob' request's response to set it.
+GET {{baseUrl}}/{{newBlobUuid}}
+
+### Get a specific image blob metadata only (without the image data)
+GET {{baseUrl}}/{{newBlobUuid}}?metadata=true
+
+### Download a file directly by UUID (with attachment header for download)
+GET {{baseUrl}}/{{newBlobUuid}}/file
+
+### Update an image blob metadata by UUID
+PUT {{baseUrl}}/{{newBlobUuid}}
+Content-Type: application/json
+
+{
+  "file_name": "my_updated_test_image.png"
+}
+
+### Update an image blob with new image by UUID (binary data)
+PUT {{baseUrl}}/{{newBlobUuid}}
+Content-Type: application/octet-stream
+X-File-Name: updated_image.jpg
+
+< ./path/to/your/updated_image.jpg
+
+### Update an image blob with new image by UUID (JSON with base64)
+PUT {{baseUrl}}/{{newBlobUuid}}
+Content-Type: application/json
+
+{
+  "uuid": "550e8400-e29b-41d4-a716-446655440000",
+  "file_name": "updated_image_from_json.jpg",
+  "content_type": "image/jpeg",
+  "image_data": "base64_encoded_data_here"
+}
+
+### Delete an image blob by UUID
+# Note: Manually set the UUID here
+DELETE {{baseUrl}}/{{newBlobUuid}}

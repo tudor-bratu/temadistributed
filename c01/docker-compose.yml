@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management # Official RabbitMQ image with management plugin
+    container_name: c02
+    ports:
+      - "5672:5672"   # AMQP protocol port (for your Spring Boot app to connect)
+      - "15672:15672" # RabbitMQ Management Plugin UI (access via http://localhost:15672)
+    environment:
+      # Default RabbitMQ user/pass: guest/guest
+      # You can set custom credentials if needed:
+      # - RABBITMQ_DEFAULT_USER=user
+      # - RABBITMQ_DEFAULT_PASS=password
+      - RABBITMQ_DEFAULT_VHOST=/
+#    networks:
+#      - local_network # Optional: good practice to define a network
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_db_container
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: admin # Change this!
+      MYSQL_DATABASE: distributed # Name of the database for BMPs
+      # You can add MYSQL_USER and MYSQL_PASSWORD to create a non-root user
+      # MYSQL_USER: app_user
+      # MYSQL_PASSWORD: app_user_password
+    ports:
+      - "3306:3306" # Exposes MySQL on host port 3306
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  mongo_db:
+    image: mongo:7.0 # Or mongo:latest, or a specific version you need
+    container_name: mongo_db_container
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin # Change this!
+      MONGO_INITDB_ROOT_PASSWORD: admin # Change this!
+      # MONGO_INITDB_DATABASE: snmp_data # Optional: create an initial database
+    ports:
+      - "27017:27017" # Exposes MongoDB on host port 27017
+    volumes:
+      - mongo_data:/data/db # Persists MongoDB data
+      # - mongo_config:/data/configdb # For replica sets, if needed later
+  con05:
+    build: ../c05/
+    ports:
+      - "3001:3001"
+    environment:
+      - DB_HOST=mysql
+      - DB_USER=root
+      - DB_PASSWORD=admin
+      - DB_DATABASE=distributed
+      - DB_PORT=3306
+      - NODE_ENV=production
+    depends_on:
+      - mysql
+    restart: unless-stopped
+  con04:
+    build: ../c04/
+    ports:
+      - "8084:8084"
+    restart: unless-stopped
+  con01:
+    container_name: main-backend-c01
+    build: .
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+  con03:
+    container_name: consumer-co3
+    build: ../c03/
+    ports:
+      - "8081:8080"
+    depends_on:
+      - rabbitmq
+    restart: unless-stopped
+
+
+volumes:
+  mongo_data:
+  mysql_data:
+
+#networks:
+#  local_network: # Optional
+#    driver: bridge

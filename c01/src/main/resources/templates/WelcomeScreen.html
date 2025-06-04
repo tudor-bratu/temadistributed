@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Encryption/Decryption</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    /* Custom style for file input button */
+    .file-input-button {
+      cursor: pointer;
+      padding: 0.75rem 1.5rem;
+      text-align: center;
+      color: white;
+      background-color: #4f46e5; /* Indigo 600 */
+      border-radius: 0.375rem; /* rounded-md */
+      transition: background-color 0.15s ease-in-out;
+    }
+    .file-input-button:hover {
+      background-color: #4338ca; /* Indigo 700 */
+    }
+    .file-input-button:focus {
+      outline: 2px solid transparent;
+      outline-offset: 2px;
+      box-shadow: 0 0 0 2px white, 0 0 0 4px #4f46e5; /* Ring-like focus */
+    }
+    /* Custom styling for better visual appeal */
+    .form-select, .form-input, .form-password {
+      border-radius: 0.375rem; /* rounded-md */
+      border-color: #D1D5DB; /* gray-300 */
+    }
+    .form-select:focus, .form-input:focus, .form-password:focus {
+      border-color: #4f46e5; /* Indigo 600 */
+      box-shadow: 0 0 0 1px #4f46e5; /* Ring-like focus */
+    }
+    .info-tooltip {
+      position: relative;
+      display: inline-block;
+      cursor: pointer;
+    }
+    .info-tooltip .tooltiptext {
+      visibility: hidden;
+      width: 220px;
+      background-color: #555;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 5px 0;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%; /* Position the tooltip above the text */
+      left: 50%;
+      margin-left: -110px; /* Use half of the width to center the tooltip */
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .info-tooltip .tooltiptext::after {
+      content: "";
+      position: absolute;
+      top: 100%; /* At the bottom of the tooltip */
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: #555 transparent transparent transparent;
+    }
+    .info-tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+    }
+    /* Styles for messages in messageArea */
+    .message-log p {
+      margin-bottom: 0.5rem;
+      padding: 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.875rem; /* text-sm */
+      text-align: left; /* Align text to the left for better readability */
+    }
+    .message-log .msg-info {
+      background-color: #eff6ff; /* blue-50 */
+      color: #2563eb; /* blue-700 */
+      border-left: 4px solid #2563eb;
+    }
+    .message-log .msg-success {
+      background-color: #f0fdf4; /* green-50 */
+      color: #16a34a; /* green-700 */
+      border-left: 4px solid #16a34a;
+    }
+    .message-log .msg-warning {
+      background-color: #fffbeb; /* yellow-50 */
+      color: #d97706; /* yellow-700 */
+      border-left: 4px solid #d97706;
+    }
+    .message-log .msg-error {
+      background-color: #fef2f2; /* red-50 */
+      color: #dc2626; /* red-700 */
+      border-left: 4px solid #dc2626;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 to-slate-800 min-h-screen flex items-center justify-center p-4 selection:bg-indigo-500 selection:text-white">
+
+<div class="bg-white shadow-2xl rounded-xl p-8 md:p-12 w-full max-w-lg transform transition-all duration-500 hover:scale-[1.01]">
+  <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">Secure Image Processor</h1>
+  <p class="text-center text-gray-500 mb-8">Upload your BMP image and specify parameters for AES encryption or decryption.</p>
+
+  <form id="uploadForm" class="space-y-6"> <!-- Removed action and method to rely solely on JS -->
+
+    <div>
+      <label for="bmpFile" class="block text-sm font-medium text-gray-700 mb-1">
+        BMP Image File
+        <span class="text-red-500">*</span>
+        <div class="info-tooltip inline-block ml-1">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-400">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+          </svg>
+          <span class="tooltiptext">Select the BMP image file you want to process. This field is required.</span>
+        </div>
+      </label>
+      <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+        <div class="space-y-1 text-center">
+          <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <div class="flex text-sm text-gray-600">
+            <label for="bmpFile" class="relative file-input-button">
+              <span>Upload a file</span>
+              <input id="bmpFile" name="bmp_image" type="file" class="sr-only" accept=".bmp" required>
+            </label>
+            <p class="pl-1">or drag and drop</p>
+          </div>
+          <p class="text-xs text-gray-500" id="fileName">BMP files only, up to 10MB</p>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <label for="aesKey" class="block text-sm font-medium text-gray-700">
+        Symmetric AES Key (16, 24, or 32 bytes)
+        <span class="text-red-500">*</span>
+        <div class="info-tooltip inline-block ml-1">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-400">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+          </svg>
+          <span class="tooltiptext">Enter your secret AES key. Must be 16, 24, or 32 characters (bytes) long for AES-128, AES-192, or AES-256 respectively. This field is required.</span>
+        </div>
+      </label>
+      <input type="password" name="aes_key" id="aesKey" required value="b7e1c2a4f5d6e7b8c9a0b1c2d3e4f5a6"
+             class="form-password mt-1 block w-full px-3 py-2 border border-gray-300 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+             placeholder="Enter your secret key securely">
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700">
+        Operation
+        <span class="text-red-500">*</span>
+        <div class="info-tooltip inline-block ml-1">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-400">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+          </svg>
+          <span class="tooltiptext">Choose whether to encrypt or decrypt the image.</span>
+        </div>
+      </label>
+      <fieldset class="mt-2">
+        <legend class="sr-only">Operation type</legend>
+        <div class="flex items-center space-x-4">
+          <div class="flex items-center">
+            <input id="encrypt" name="operation" type="radio" value="encrypt" checked
+                   class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300">
+            <label for="encrypt" class="ml-2 block text-sm text-gray-900">
+              Encrypt
+            </label>
+          </div>
+          <div class="flex items-center">
+            <input id="decrypt" name="operation" type="radio" value="decrypt"
+                   class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300">
+            <label for="decrypt" class="ml-2 block text-sm text-gray-900">
+              Decrypt
+            </label>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <div>
+      <label for="mode" class="block text-sm font-medium text-gray-700">
+        AES Mode
+        <span class="text-red-500">*</span>
+        <div class="info-tooltip inline-block ml-1">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-400">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+          </svg>
+          <span class="tooltiptext">Select the AES mode of operation. ECB is simpler, CBC is generally more secure.</span>
+        </div>
+      </label>
+      <select id="mode" name="mode" required
+              class="form-select mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+        <option value="ECB">ECB (Electronic Codebook)</option>
+        <option value="CBC">CBC (Cipher Block Chaining)</option>
+      </select>
+    </div>
+
+    <div>
+      <button type="submit" id="submitButton"
+              class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-150">
+        Process Image
+      </button>
+    </div>
+  </form>
+  <div id="messageArea" class="mt-6 message-log"> <!-- Removed text-center to allow left-align from p tags -->
+    <!-- Messages will be appended here -->
+  </div>
+</div>
+
+<script>
+  // DOM Elements
+  const bmpFileInput = document.getElementById('bmpFile');
+  const fileNameDisplay = document.getElementById('fileName');
+  const uploadForm = document.getElementById('uploadForm');
+  const messageArea = document.getElementById('messageArea');
+  const submitButton = document.getElementById('submitButton');
+
+  let eventSource = null; // Single global variable for the SSE connection
+
+  // Helper function to add messages to the message area
+  function addMessage(text, type = 'info') {
+    const p = document.createElement('p');
+    p.textContent = text;
+    p.className = `msg-${type}`; // Applies Tailwind-like classes defined in <style>
+    messageArea.appendChild(p);
+    messageArea.scrollTop = messageArea.scrollHeight; // Scroll to the bottom
+  }
+
+  function addButton(text, type = 'info'){
+    const a = document.createElement('a');
+    a.href = text;
+    a.text = "Download your converted file!"
+      // Always uses this simple blue style
+    a.className = 'bg-blue-500 text-white font-bold py-2 px-4 rounded';
+    messageArea.appendChild(a);
+    messageArea.scrollTop = messageArea.scrollHeight;
+  }
+
+  // Helper function to trigger file download
+  function triggerDownload(url, suggestedFilename = '') {
+    addMessage('Initiating file download...', 'info');
+    const link = document.createElement('a');
+    link.href = url;
+
+    let filename = suggestedFilename;
+    // Ensure suggestedFilename is a non-empty string, otherwise try to derive from URL
+    if (!filename || typeof filename !== 'string' || !filename.trim()) {
+      try {
+        // URL constructor needs an absolute URL. If 'url' could be relative, a base URL would be needed.
+        // Assuming 'url' from SSE will be absolute.
+        const urlObj = new URL(url);
+        const pathParts = urlObj.pathname.split('/');
+        filename = pathParts[pathParts.length - 1]; // Get the last part of the path
+        if (!filename.trim()) { // Handle cases like trailing slash in URL path
+          filename = 'downloaded_file';
+        }
+      } catch (e) {
+        console.warn("Could not parse URL to extract filename:", e, "URL:", url);
+        // Create a fallback filename with a timestamp if parsing fails
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        filename = `downloaded_file_${timestamp}`;
+      }
+    }
+
+    // Basic sanitization for the filename (replace invalid chars and multiple spaces)
+
+    if (!filename.trim()) { // Final fallback if sanitization results in empty string
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      filename = `downloaded_file_${timestamp}`;
+    }
+
+    link.download = filename; // Sets the default filename for the download
+    link.style.display = 'none'; // The link doesn't need to be visible
+    document.body.appendChild(link); // Append to body to ensure it's clickable (especially for Firefox)
+    link.click(); // Programmatically click the link to trigger the download
+    document.body.removeChild(link); // Clean up by removing the temporary link
+    addMessage(`Download started for "${filename}". Check your browser's downloads.`, 'success');
+  }
+
+
+  // Display selected file name and validate type
+  if (bmpFileInput && fileNameDisplay) {
+    bmpFileInput.addEventListener('change', function(event) {
+      const file = event.target.files[0];
+      if (file) {
+        if (file.type === "image/bmp") {
+          fileNameDisplay.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+          fileNameDisplay.classList.remove('text-red-500');
+          fileNameDisplay.classList.add('text-gray-500');
+          messageArea.innerHTML = ''; // Clear previous messages
+        } else {
+          fileNameDisplay.textContent = 'Invalid file type. Please select a BMP image.';
+          fileNameDisplay.classList.add('text-red-500');
+          fileNameDisplay.classList.remove('text-gray-500');
+          addMessage('Invalid file type. Please select a BMP image.', 'error');
+          event.target.value = ''; // Clear the invalid file
+        }
+      } else {
+        fileNameDisplay.textContent = 'BMP files only, up to 10MB';
+        fileNameDisplay.classList.remove('text-red-500');
+        fileNameDisplay.classList.add('text-gray-500');
+      }
+    });
+  }
+
+  // Function to connect to Server-Sent Events (SSE)
+  function connectToSSE(uuid) {
+    if (eventSource) {
+      eventSource.close(); // Close any existing connection
+    }
+
+    eventSource = new EventSource(`/api/events?jobid=${uuid}`); // SSE endpoint
+
+    eventSource.onopen = function() {
+      console.log('SSE connection established for job:', uuid);
+      addMessage('Real-time updates connected.', 'info');
+    };
+
+    eventSource.onmessage = function(event) {
+      const rawEventData = event.data;
+      try {
+        const data = JSON.parse(rawEventData);
+        console.log('SSE message (JSON):', data);
+
+        // Determine message type for styling based on status
+        let messageType = 'info'; // Default
+        if (data.status === 'completed') messageType = 'success';
+        else if (data.status === 'error') messageType = 'error';
+        // If it's a message associated with a download path, it's likely informational or a success step
+        else if (data.path) messageType = 'info';
+
+
+        // 1. Display message from server (if any)
+        if (data.message) {
+          addMessage(data.message, messageType);
+        }
+
+        // 2. Trigger download if path is present in the SSE data
+        if (data.path && typeof data.path === 'string') {
+          // If no specific message was tied to the download, add a generic one.
+          if (!data.message || (data.message && !data.message.toLowerCase().includes("download") && !data.message.toLowerCase().includes("file"))) {
+            addMessage(`File ready for download.`, 'info');
+          }
+          // data.filename can be passed from server; triggerDownload handles if it's undefined
+          triggerDownload(data.path, data.filename);
+        }
+
+        // 3. Finalize if status is 'completed' or 'error'
+        if (data.status === 'completed' || data.status === 'error') {
+          // Add a generic completion/error message if the server didn't provide one via data.message
+          if (!data.message) {
+            addMessage(data.status === 'completed' ? 'Process completed successfully.' : 'An error occurred during processing.', messageType);
+          }
+          if (eventSource) {
+            eventSource.close(); // Close the SSE connection
+          }
+          // Re-enable the submit button
+          submitButton.disabled = false;
+          submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+          submitButton.textContent = 'Process Image';
+        }
+        // Fallback for other JSON data that wasn't explicitly handled (e.g., no message, no path, and not a final status)
+        else if (!data.message && !data.path && typeof data === 'object' && Object.keys(data).length > 0) {
+          // This handles cases like `{"status": "Connected"}` if it doesn't have a message or path.
+          addMessage(`Received data: ${JSON.stringify(data)}`, 'info');
+        }
+
+      } catch (e) { // Handle cases where event.data is not valid JSON
+        console.log('SSE message (raw/non-JSON):', rawEventData);
+        addButton(rawEventData, 'info');
+        // addMessage(`Raw update: ${rawEventData}`, 'info');
+      }
+    };
+
+    eventSource.onerror = function(error) {
+      console.error('SSE Connection was closed:', error);
+      addMessage('Click on the above link to download the image.', 'error');
+      if (eventSource) {
+        eventSource.close();
+      }
+      eventSource = null; // Nullify to allow reconnection if needed
+      // Re-enable button on SSE error
+      submitButton.disabled = false;
+      submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+      submitButton.textContent = 'Process Image';
+    };
+  }
+
+  // Handle form submission using Fetch API
+  if (uploadForm && messageArea && submitButton) {
+    uploadForm.addEventListener('submit', async function(event) {
+      event.preventDefault(); // Prevent default form submission (stops URL change)
+      messageArea.innerHTML = ''; // Clear previous messages
+
+      // Show loading indicator and disable button
+      addMessage('Processing...', 'info');
+      submitButton.disabled = true;
+      submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+      submitButton.innerHTML = `
+        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Processing...`;
+
+      const formData = new FormData(uploadForm);
+      const aesKey = formData.get('aes_key');
+
+      // Client-side validation for AES key length
+      if (!aesKey || (aesKey.length !== 16 && aesKey.length !== 24 && aesKey.length !== 32)) {
+        addMessage('AES Key must be 16, 24, or 32 characters long.', 'error');
+        submitButton.disabled = false;
+        submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+        submitButton.textContent = 'Process Image';
+        return;
+      }
+
+      try {
+        // Make the POST request to the server
+        const response = await fetch('/api/upload', { // Your API endpoint for upload
+          method: 'POST',
+          body: formData,
+          // 'Content-Type': 'multipart/form-data' is set automatically by browser for FormData
+        });
+
+        const responseData = await response.json(); // Assume server sends JSON response
+        console.log('Initial server response:', responseData);
+
+        if (response.ok) {
+          // Display initial success message from POST request
+          addMessage(responseData.message || 'Processing started successfully. Waiting for updates...', 'success');
+          if (responseData.uuid) {
+            connectToSSE(responseData.uuid); // Connect to SSE for real-time updates
+          } else {
+            addMessage('Warning: No Job ID received to start real-time updates.', 'warning');
+            submitButton.disabled = false; // Re-enable button if no UUID
+            submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            submitButton.textContent = 'Process Image';
+          }
+        } else {
+          // Handle HTTP errors (e.g., 400, 500)
+          addMessage(`Error: ${response.status} - ${responseData.message || 'Unknown error during initial processing.'}`, 'error');
+          submitButton.disabled = false;
+          submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+          submitButton.textContent = 'Process Image';
+        }
+      } catch (error) {
+        // Handle network errors or issues with fetch/JSON parsing
+        console.error('Form submission fetch error:', error);
+        addMessage('An unexpected error occurred during submission. Please check the console and try again.', 'error');
+        submitButton.disabled = false;
+        submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+        submitButton.textContent = 'Process Image';
+      }
+    });
+  }
+
+  // Clean up SSE connection when the page is unloaded
+  window.addEventListener('beforeunload', function() {
+    if (eventSource) {
+      console.log('Closing SSE connection due to page unload.');
+      eventSource.close();
+      eventSource = null;
+    }
+  });
+</script>
+</body>
+</html>
